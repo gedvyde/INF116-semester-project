@@ -1,0 +1,237 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Predikering av oppholdslengde</title>
+    <style>
+        body {
+            font-family: 'Roboto', sans-serif;
+            background-color: #f8f9fa;
+            margin: 0;
+            padding: 20px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            flex-direction: column;
+            min-height: 100vh;
+        }
+
+        h1 {
+            color: #333;
+            text-align: center;
+            margin-bottom: 20px;
+            font-size: 1.8em;
+        }
+
+        .container {
+            background-color: #ffffff;
+            border-radius: 8px;
+            box-shadow: 0px 4px 8px rgba(0, 0, 0, 0.1);
+            padding: 20px 40px;
+            max-width: 600px;
+            width: 100%;
+        }
+
+        .form-content {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 20px;
+        }
+
+        .form-group {
+            width: calc(50% - 10px);
+        }
+
+        label {
+            font-weight: 500;
+            margin-top: 10px;
+            display: inline-block;
+        }
+
+        input[type="number"],
+        select {
+            width: 100%;
+            padding: 8px;
+            margin: 8px 0;
+            border: 1px solid #ced4da;
+            border-radius: 4px;
+            box-sizing: border-box;
+        }
+
+        .checkbox-group {
+            display: flex;
+            flex-direction: column;
+            margin: 10px 0;
+        }
+
+        .checkbox-group label {
+            font-weight: normal;
+            margin: 4px 0;
+        }
+
+        .button-group {
+            display: flex;
+            justify-content: space-between;
+            margin-top: 20px;
+        }
+
+        button[type="submit"] {
+            background-color: #007bff;
+            color: white;
+            border: none;
+            border-radius: 4px;
+            margin-bottom: 50px;
+            padding: 50px 100px; /* Increased padding for a larger button */
+            font-size: 1.2em; /* Increased font size */
+            cursor: pointer;
+            transition: background-color 0.3s ease;
+        }
+
+        button[type="submit"]:hover {
+            background-color: #0056b3;
+        }
+
+        .result {
+            text-align: center;
+            font-size: 1.9em;
+            margin-bottom: 100px;
+            color: #2831a7;
+        }
+    </style>
+</head>
+<body>
+    <h1>Estimering av oppholdslengde</h1>
+    <div class="container">
+        <form action="/predict" method="POST", id="predictionForm">
+
+       
+            <div class="form-content">
+                <div class="form-group">
+                    <label for="alder">Alder:</label>
+                    <input type="number" name="alder" step ="0.1" min="0" required>
+                </div>
+
+                <div class="form-group">
+                    <label for="koma_score">Koma Score:</label>
+                    <input type="number" name="koma_score" step ="0.001" min="0" required>
+                </div>
+
+                <div class="form-group">
+                    <label for="adl_stedfortreder">ADL Stedfortreder:</label>
+                    <input type="number" name="adl_stedfortreder" step ="0.001" min="0"  required>
+                </div>
+
+                <div class="form-group">
+                    <label for="antall_komorbiditeter">Antall Komorbiditeter:</label>
+                    <input type="number" name="antall_komorbiditeter" step ="1" min="0" required>
+                </div>
+
+                <div class="form-group">
+                    <label for="fysiologisk_score">Fysiologisk Score:</label>
+                    <input type="number" name="fysiologisk_score" tep="0.0001"min="0" required>
+                </div>
+
+                <div class="form-group">
+                    <label for="apache_fysiologisk_score">Apache Fysiologisk Score:</label>
+                    <input type="number" name="apache_fysiologisk_score"  step="0.1" min="0" required>
+                </div>
+
+                <div class="form-group">
+                    <label for="overlevelsesestimat_2mnd">Overlevelsesestimat 2 mnd:</label>
+                    <input type="number" name="overlevelsesestimat_2mnd" step="0.0001" min="0" max="1" required>
+                </div>
+
+                <div class="form-group">
+                    <label for="overlevelsesestimat_6mnd">Overlevelsesestimat 6 mnd:</label>
+                    <input type="number" name="overlevelsesestimat_6mnd" step="0.0001" min="0" max="1" required>
+                </div>
+
+                <div class="form-group">
+                    <label for="lege_overlevelsesestimat_6mnd">Lege Overlevelsesestimat 6 mnd:</label>
+                    <input type="number" name="lege_overlevelsesestimat_6mnd" step="0.0001" min="0" max="1" required>
+                </div>
+
+                <div class="form-group">
+                    <label for="lege_overlevelsesestimat_2mnd">Lege Overlevelsesestimat 2 mnd:</label>
+                    <input type="number" name="lege_overlevelsesestimat_2mnd" step="0.0001" min="0" max="1" required>
+                </div>
+
+                
+                <input type="hidden" name="sykdomskategori_Cancer" id="sykdomskategori_Cancer" value="0">
+                <input type="hidden" name="sykdomskategori_ARF/MOSF" id="sykdomskategori_ARF/MOSF" value="0">
+                <input type="hidden" name="sykdom_underkategori_ARF/MOSF w/Sepsis" id="sykdom_underkategori_ARF/MOSF w/Sepsis" value="0">
+                <input type="hidden" name="sykdom_underkategori_MOSF w/Malig" id="sykdom_underkategori_MOSF w/Malig" value="0">
+                <input type="hidden" name="sykdom_underkategori_Lung Cancer" id="sykdom_underkategori_Lung Cancer" value="0">
+                <input type="hidden" name="sykdom_underkategori_Cirrhosis" id="sykdom_underkategori_Cirrhosis" value="0">
+
+                <div class="form-group">
+                    <label for="sykdomskategori">Sykdomskategori:</label>
+                    <select name="sykdomskategori" id="sykdomskategori" onchange="updateSykdomCategory()">
+                        <option value="">--Velg--</option>
+                        <option value="sykdomskategori_Cancer">Cancer</option>
+                        <option value="sykdomskategori_ARF/MOSF">ARF/MOSF</option>
+                        <option value="sykdomskategori_Other">Annen</option>
+                    </select>
+                </div>
+
+                <div class="form-group">
+                    <label for="sykdoms_undercategory">Sykdoms Underkategori:</label>
+                    <select name="sykdoms_undercategory" id="sykdoms_undercategory" onchange="updateSykdomCategory()">
+                        <option value="">--Velg--</option>
+                        <option value="sykdom_underkategori_ARF/MOSF w/Sepsis">ARF/MOSF w/Sepsis</option>
+                        <option value="sykdom_underkategori_MOSF w/Malig">MOSF w/Malig</option>
+                        <option value="sykdom_underkategori_Lung Cancer">Lung Cancer</option>
+                        <option value="sykdom_underkategori_Cirrhosis">Cirrhosis</option>
+                        <option value="sykdom_underkategori_Other">Annen</option>
+                    </select>
+                </div>
+
+                <div class="form-group checkbox-group">              
+                    <input type="hidden" name="kreft_no" value="1">
+                    <label><input type="checkbox" name="kreft_no" value="0"> Kreft</label><br>
+
+                    <input type="hidden" name="etnisitet_hispanic" value="0">
+                    <label><input type="checkbox" name="etnisitet_hispanic" value="1"> Etnisitet Hispanic</label><br>
+
+                    <input type="hidden" name="diabetes" value="0">
+                    <label><input type="checkbox" name="diabetes" value="1"> Diabetes</label><br>
+
+                    <input type="hidden" name="inntekt_under $11k" value="0">
+                    <label><input type="checkbox" name="inntekt_under $11k" value="1"> Inntekt under $11k</label><br><br>
+                </div>
+
+            
+            <div class="button-group">
+                <button type="submit">Prediker</button>
+               <!-- <button type="reset">Reset</button> -->
+            </div>
+        </form>
+
+        <div class="result">
+            {{ prediction_text }}
+        </div>
+    </div>
+
+    <script>
+        function updateSykdomCategory() {
+            // JavaScript function to update hidden fields based on the dropdown selections
+            document.getElementById("sykdomskategori_Cancer").value = 0;
+            document.getElementById("sykdomskategori_ARF/MOSF").value = 0;
+            document.getElementById("sykdom_underkategori_ARF/MOSF w/Sepsis").value = 0;
+            document.getElementById("sykdom_underkategori_MOSF w/Malig").value = 0;
+            document.getElementById("sykdom_underkategori_Lung Cancer").value = 0;
+            document.getElementById("sykdom_underkategori_Cirrhosis").value = 0;
+
+            var selectedCategory = document.getElementById("sykdomskategori").value;
+            if (selectedCategory) {
+                document.getElementById(selectedCategory).value = 1;
+            }
+
+            var selectedUnderCategory = document.getElementById("sykdoms_undercategory").value;
+            if (selectedUnderCategory) {
+                document.getElementById(selectedUnderCategory).value = 1;
+            }
+        }
+    </script>
+</body>
